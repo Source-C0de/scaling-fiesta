@@ -1,5 +1,60 @@
 #!/bin/bash
 
+set -euo pipefail
+ 
+# ─── Colour helpers ──────────────────────────────────────────────────────────
+GREEN='\033[0;32m'; YELLOW='\033[1;33m'; RED='\033[0;31m'; BOLD='\033[1m'; NC='\033[0m'
+info()    { echo -e "${GREEN}[INFO]${NC}  $*"; }
+warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+error()   { echo -e "${RED}[ERROR]${NC} $*"; }
+section() { echo -e "\n${BOLD}━━━ $* ━━━${NC}"; }
+ 
+# ─── Privilege check ─────────────────────────────────────────────────────────
+if [[ $EUID -ne 0 ]]; then
+  error "This script must be run as root. Try: sudo bash $0"
+  exit 1
+fi
+ 
+# =============================================================================
+# CLEANUP FUNCTION
+# Removes all bridges, namespaces, and interfaces created by this script.
+# Safe to run even if setup was only partially completed — errors are suppressed.
+# =============================================================================
+cleanup() {
+  section "CLEANUP"
+  info "Removing network namespaces, bridges, and veth interfaces..."
+ 
+  # Delete namespaces — this automatically removes any veth ends inside them
+  for ns in ns1 ns2 router-ns; do
+    if ip netns list 2>/dev/null | grep -qw "$ns"; then
+      ip netns del "$ns" && info "  Deleted namespace: $ns"
+    fi
+  done
+ 
+  # Take down and delete bridges
+  for br in br0 br1; do
+    if ip link show "$br" &>/dev/null; then
+      ip link set "$br" down 2>/dev/null || true
+      ip link del "$br"     && info "  Deleted bridge: $br"
+    fi
+  done
+ 
+  # Remove any orphaned host-side veth ends that survived namespace deletion
+  for iface in veth-br0 veth-br1 veth-rtr0 veth-rtr1; do
+    if ip link show "$iface" &>/dev/null; then
+      ip link del "$iface" && info "  Deleted orphan interface: $iface"
+    fi
+  done
+ 
+  echo ""
+  info "Cleanup complete. All simulation components removed."
+}
+ 
+# If called with 'clean' argument, clean up and exit
+if [[ "${1:-}" == "clean" ]]; then
+  cleanup
+  exit 0
+fi
 
 
 # Create Bridge
