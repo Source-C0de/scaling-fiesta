@@ -1,6 +1,6 @@
 # Linux Network Namespace Simulation
 
-**Author:** Student Submission  
+**Author:** Fahmim Shahriar  
 **Assignment:** Network Namespace Simulation with Bridges and Routing  
 **Platform:** Linux (Ubuntu / Debian recommended)
 
