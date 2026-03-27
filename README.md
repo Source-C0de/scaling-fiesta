@@ -706,13 +706,11 @@ ip link del veth-rtr1 2>/dev/null || true
 ```
 
 **Why cleanup matters:**
-
 - Network namespaces and bridges persist across your terminal session — they survive until the machine reboots or you explicitly delete them.
 - Leftover interfaces with the same names will cause `RTNETLINK answers: File exists` errors if you try to run setup again.
 - Leftover `sysctl` changes (like `ip_forward`) are confined to the deleted namespace and disappear automatically.
 
 ---
-
 ## 11. Troubleshooting
 
 | Problem | Likely Cause | Fix |
@@ -725,5 +723,3 @@ ip link del veth-rtr1 2>/dev/null || true
 | Permission denied | Not running as root | Prefix all commands with `sudo` or switch to root |
 
 ---
-
-*End of Documentation*
